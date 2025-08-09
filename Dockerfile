@@ -10,7 +10,7 @@ RUN --mount=type=cache,target=/home/gradle/.gradle/caches \
 # Etapa de ejecución
 FROM eclipse-temurin:21-jre-jammy
 WORKDIR /app
-COPY --from=builder /fineract/fineract-provider/build/libs/*.jar fineract-provider.jar
+COPY --from=builder /fineract/fineract-provider/build/libs/*.jar ./fineract-provider.jar
 
 # Configuración de usuario seguro
 RUN addgroup --system fineract && \
@@ -21,4 +21,4 @@ USER fineract
 
 EXPOSE 8443
 
-ENTRYPOINT ["java", "-jar", "fineract-provider.jar"]
+ENTRYPOINT ["sh", "-c", "exec java ${JAVA_OPTS} -jar fineract-provider.jar"]
