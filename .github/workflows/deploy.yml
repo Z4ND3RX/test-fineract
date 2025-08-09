@@ -9,6 +9,7 @@ env:
   AWS_REGION: ${{ secrets.AWS_REGION }}
   ECR_REPOSITORY: ${{ secrets.ECR_REPOSITORY }}
   IMAGE_TAG: ${{ github.sha }}
+  JAVA_OPTS: "-XX:+UseContainerSupport -XX:MaxRAMPercentage=75.0"
 
 jobs:
   build-and-push:
@@ -63,6 +64,7 @@ jobs:
     needs: build-and-push
     runs-on: ubuntu-latest
     environment: dev
+
     steps:
       - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@v2
@@ -86,6 +88,7 @@ jobs:
           DB_URL: ${{ secrets.FINERACT_DB_URL }}
           DB_USER: ${{ secrets.FINERACT_DB_USER }}
           DB_PASSWORD: ${{ secrets.FINERACT_DB_PASSWORD }}
+          JAVA_OPTS: ${{ env.JAVA_OPTS }}
         run: |
           ssh -o StrictHostKeyChecking=no ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }} << 'EOF'
             set -euxo pipefail
@@ -105,17 +108,24 @@ jobs:
             docker run -d \
               --name fineract \
               --restart unless-stopped \
+              --health-cmd "curl -f https://localhost:8443/actuator/health || exit 1" \
+              --health-interval 30s \
+              --health-timeout 10s \
+              --health-retries 3 \
               -e FINERACT_HIKARI_DRIVER_SOURCE_CLASS_NAME=org.postgresql.Driver \
               -e FINERACT_HIKARI_JDBC_URL=$DB_URL \
               -e FINERACT_HIKARI_USERNAME=$DB_USER \
               -e FINERACT_HIKARI_PASSWORD=$DB_PASSWORD \
               -e SPRING_PROFILES_ACTIVE=dev \
+              -e JAVA_OPTS="$JAVA_OPTS" \
               -p 8443:8443 \
               $ECR_REPOSITORY:$IMAGE_TAG
           
             # Clean up and verify
             docker image prune -af --filter "until=48h"
-            sleep 10
+          
+            # Verify deployment
+            sleep 15  # Wait for application startup
             docker ps -a
             docker logs --tail 50 fineract
           EOF
