@@ -13,7 +13,7 @@ COPY fineract-provider fineract-provider
 
 # Construir con cache de dependencias y solo lo necesario
 RUN --mount=type=cache,target=/home/gradle/.gradle/caches \
-    gradle --no-daemon bootJar -x test -x compileTest --stacktrace --info
+    gradle --no-daemon bootJar -x compileTest --stacktrace --info
 
 # Etapa de ejecución
 FROM eclipse-temurin:21-jre-jammy
