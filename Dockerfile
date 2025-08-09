@@ -3,12 +3,14 @@ FROM gradle:8.10.2-jdk21 AS builder
 WORKDIR /fineract
 COPY . .
 RUN --mount=type=cache,target=/home/gradle/.gradle/caches \
-    gradle --no-daemon bootJar -x test --stacktrace --info
+    gradle --no-daemon bootJar -x test --stacktrace --info && \
+    # Verificar que el JAR se generó correctamente
+    ls -la /fineract/fineract-provider/build/libs/
 
 # Etapa de ejecución
 FROM eclipse-temurin:21-jre-jammy
 WORKDIR /app
-COPY --from=builder /fineract/fineract-provider/build/libs/fineract-provider.jar .
+COPY --from=builder /fineract/fineract-provider/build/libs/*.jar fineract-provider.jar
 
 # Configuración de usuario seguro
 RUN addgroup --system fineract && \
@@ -19,5 +21,4 @@ USER fineract
 
 EXPOSE 8443
 
-# Punto de entrada con soporte para JAVA_OPTS
-ENTRYPOINT ["sh", "-c", "exec java ${JAVA_OPTS} -jar fineract-provider.jar"]
+ENTRYPOINT ["java", "-jar", "fineract-provider.jar"]
