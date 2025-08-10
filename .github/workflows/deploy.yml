@@ -95,17 +95,17 @@ jobs:
           JAVA_OPTS: "-XX:+UseContainerSupport -XX:MaxRAMPercentage=75.0"
         run: |
           ssh -o StrictHostKeyChecking=no ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }} \
-          AWS_REGION="${AWS_REGION}" \
-          ECR_REPOSITORY="${ECR_REPOSITORY}" \
-          APP_NAME="${APP_NAME}" \
-          FINERACT_PORT="${FINERACT_PORT}" \
-          DOCKER_NETWORK="${DOCKER_NETWORK}" \
-          IMAGE_TAG="${IMAGE_TAG}" \
-          DB_URL="${DB_URL}" \
-          DB_USER="${DB_USER}" \
-          DB_PASSWORD="${DB_PASSWORD}" \
-          JAVA_OPTS="${JAVA_OPTS}" \
-          'bash -s' << 'EOSSH'
+          "AWS_REGION='${AWS_REGION}' \
+          ECR_REPOSITORY='${ECR_REPOSITORY}' \
+          APP_NAME='${APP_NAME}' \
+          FINERACT_PORT='${FINERACT_PORT}' \
+          DOCKER_NETWORK='${DOCKER_NETWORK}' \
+          IMAGE_TAG='${IMAGE_TAG}' \
+          DB_URL='${DB_URL}' \
+          DB_USER='${DB_USER}' \
+          DB_PASSWORD='${DB_PASSWORD}' \
+          JAVA_OPTS='${JAVA_OPTS}' \
+          bash -s" << 'EOSSH'
             set -euxo pipefail
             required_vars=("AWS_REGION" "ECR_REPOSITORY" "APP_NAME" "FINERACT_PORT" "DOCKER_NETWORK" "IMAGE_TAG" "DB_URL" "DB_USER" "DB_PASSWORD" "JAVA_OPTS")
             for var in "${required_vars[@]}"; do
